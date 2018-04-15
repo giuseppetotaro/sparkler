@@ -35,6 +35,10 @@ spark_ui_port=4041
 spark_ui_url="http://localhost:$spark_ui_port/"
 user="sparkler"
 
+tor_port=9050
+control_port=9051
+privoxy_port=8118
+
 # check for docker
 command -v docker >/dev/null 2>&1 || { echo "Error: Require 'docker' but it is unavailable." >&2; exit 2; }
 
@@ -49,7 +53,7 @@ build_image(){
     cd "$prev_dir"
 
     echo "Building a docker image with tag '$docker_tag' ..."
-    docker build -f "$DIR/sparkler-deployment/docker/Dockerfile" -t "$docker_tag" "$DIR"
+    docker build -f "$DIR/sparkler-deployment/docker/Dockerfile" "$DIR" -t "$docker_tag"
 
     if [ $? -ne 0 ]; then
         echo "Error: Failed"
@@ -68,8 +72,8 @@ fetch_image() {
 image_id=`docker images -q "$docker_tag" | head -1`
 if [[ -z "${image_id// }" ]]; then
      echo "Cant find docker image $docker_tag. Going to Fetch it"
-     # build_image;
-     fetch_image
+     build_image
+     #fetch_image
      image_id=`docker images -q "$docker_tag" | head -1`
 fi
 echo "Found image: $image_id"
@@ -78,7 +82,7 @@ echo "Found image: $image_id"
 container_id=`docker ps -q --filter="ancestor=$image_id"`
 if [[ -z "${container_id// }" ]]; then
     echo "No container is running for $image_id. Starting it..."
-    container_id=`docker run -p "$solr_port":8983 -p "$spark_ui_port:4040" -it --user "$user" -d $image_id`
+    container_id=`docker run -e "http_proxy=http://0.0.0.0:$privoxy_port" -e "https_proxy=http://0.0.0.0:$privoxy_port" -p "$solr_port":8983 -p "$spark_ui_port:4040" -p "$tor_port:9050" -p "$control_port:9051" -p "$privoxy_port:8118" -it --user "$user" -d $image_id`
     if [ $? -ne 0 ]; then
         echo "Something went wrong :-( Please check error messages from docker."
         exit 3

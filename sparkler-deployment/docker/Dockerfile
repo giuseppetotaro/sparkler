@@ -23,10 +23,25 @@
 
 FROM ubuntu:16.04
 
-RUN groupadd --gid 1000 sparkler && \
-   useradd -M --uid 1000 --gid 1000 --home /home/sparkler sparkler
+RUN apt-get update && apt-get install -y sudo && \
+   groupadd --gid 1000 sparkler && \
+   useradd -M --uid 1000 --gid 1000 --home /home/sparkler sparkler && \
+   usermod -aG sudo sparkler && \
+   echo 'sparkler:sparkler' | chpasswd
 
-RUN apt-get update &&  apt-get install -y software-properties-common wget lsof emacs-nox
+RUN apt-get update &&  apt-get install -y software-properties-common wget lsof emacs-nox vim sudo curl
+
+# Tor+Privoxy configuration
+ADD other/socat.rc /etc/init.d/socat
+RUN apt-get update && apt-get install -y tor privoxy socat && \
+  echo "forward-socks5 / 0.0.0.0:9050 ." >> /etc/privoxy/config && \
+  sed -i 's/listen-address\s*127.0.0.1:8118/listen-address 0.0.0.0:8118/g' /etc/privoxy/config && \
+  sed -i 's/listen-address\s*localhost:8118/listen-address 0.0.0.0:8118/g' /etc/privoxy/config && \
+  sed -i 's/#SOCKSPort 192.168.0.1:9100/SOCKSPort 0.0.0.0:9050/g' /etc/tor/torrc && \
+  sed -i 's/#ControlPort 9051/ControlPort 9052/g' /etc/tor/torrc && \
+  update-rc.d tor defaults && \
+  update-rc.d privoxy defaults && \
+  update-rc.d socat defaults 
 
 RUN \
   echo oracle-java8-installer shared/accepted-oracle-license-v1-1 select true | debconf-set-selections && \

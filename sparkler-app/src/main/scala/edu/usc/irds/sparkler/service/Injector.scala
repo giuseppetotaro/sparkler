@@ -32,7 +32,7 @@ import scala.collection.JavaConversions._
 import scala.io.Source
 import java.nio.file.NotDirectoryException
 
-import org.apache.commons.validator.routines.UrlValidator
+import org.apache.commons.validator.routines.{RegexValidator, UrlValidator}
 
 import scala.collection.mutable.Stack
 import scala.collection.mutable.ArrayBuffer
@@ -49,7 +49,8 @@ class Injector extends CliTool {
   val conf: SparklerConfiguration = Constants.defaults.newDefaultConfig()
 
   // Initialize URL Validator
-  val urlValidator: UrlValidator = new UrlValidator()
+  val regexValidator:RegexValidator = new RegexValidator("^([\\p{Alnum}\\-\\.]*)(:\\d*)?(.*)?")
+  val urlValidator: UrlValidator = new UrlValidator(regexValidator, UrlValidator.ALLOW_ALL_SCHEMES)
 
   @Option(name = "-sf", aliases = Array("--seed-file"), forbids = Array("-su"),
     usage = "path to seed file")

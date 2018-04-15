@@ -12,4 +12,5 @@ if [ ! -f "$JAR" ]
 fi
 
 # run
-java -Xms1g -cp $DIR/conf:$JAR -Dpf4j.pluginsDir=$DIR/plugins edu.usc.irds.sparkler.Main $@
+#java -Xms1g -cp $DIR/conf:$JAR -Dpf4j.pluginsDir=$DIR/plugins edu.usc.irds.sparkler.Main $@
+java -Xms1g -cp $DIR/conf:$JAR -Dhttp.proxyHost=0.0.0.0 -Dhttp.proxyPort=8118 -Dhttps.proxyHost=0.0.0.0 -Dhttps.proxyPort=8118 -Dpf4j.pluginsDir=$DIR/plugins edu.usc.irds.sparkler.Main $@
